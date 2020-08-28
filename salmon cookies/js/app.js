@@ -8,6 +8,7 @@ var allHourlyTotalArray = [];
 var grandTotal = 0;
 var form = document.getElementById('form');
 var tfoot = document.createElement('tfoot');
+var tbody = document.createElement('tbody');  // Ryan - if this is a global, you only create one tbody. which is appropriate
 
 //store constructor
 function Store(name, min, max, avg) {
@@ -38,7 +39,7 @@ Store.prototype.calcAvgCookieSales = function () {
 //render method for each table
 Store.prototype.render = function () {
   this.calcAvgCookieSales();
-  var tbody = document.createElement('tbody');
+  // var tbody = document.createElement('tbody'); -should be global otherwise too many table bodies created.  should only be 1
   var trEl = document.createElement('tr');
   createElement('td',this.name, trEl);
   for ( var i = 0; i < hours.length; i++) {
@@ -72,17 +73,21 @@ function renderAllRows () {
 
 //render footer
 function renderFooter () {
+  allHourlyTotalArray = [];  // RYan- this resets array and it will re-calculate totals normally
+  grandTotal = 0;
   //tfoot.innerHTML = '';
-  table.deleteRow(-1);
-  calcTotals();
+  // table.deleteRow(-1); // Ryan -???? shouldn't be necessary
+  calcTotals();  // Ryan -was called twice, this is why you had twice as many numbers at begginning
   var trEl = document.createElement('tr');
   createElement('td', 'Totals', trEl);
   for ( var i = 0; i < allHourlyTotalArray.length; i++) {
     createElement('td', allHourlyTotalArray[i], trEl);
   }
   createElement('td', grandTotal, trEl);
-  //tfoot.appendChild(trEl);
-  table.appendChild(trEl);
+  // //tfoot.appendChild(trEl);
+  // table.appendChild(trEl);  Ryan - this likely changed with TA during troubleshooting.   having in tfoot is convenient, because then it always glues to bottom of table
+   tfoot.appendChild(trEl);
+  table.appendChild(tfoot); 
 }
 
 //create element function to DRY out code
@@ -99,7 +104,7 @@ function calcTotals () {
     for ( var j = 0; j < allStores.length; j++) {
       hourlyTotal += allStores[j].avgSalesArray[i];
     }
-    allHourlyTotalArray.push(hourlyTotal);
+    allHourlyTotalArray.push(hourlyTotal); // Ryan - this function was being called twice, so the array of numbers was just TOOOOOO big
     grandTotal += hourlyTotal;
   }
 }
@@ -113,6 +118,7 @@ function handleSubmit(event){
   var avg = parseInt(event.target.avg.value);
   var newStore = new Store (name, min, max, avg);
   newStore.render();
+  tfoot.innerHTML = '';  // Ryan - must clear out the footer each time
   renderFooter();
 }
 
@@ -126,7 +132,7 @@ new Store ('Lima', 2, 16, 4.6);
 //render header, all rows, footer and total
 renderHeader();
 renderAllRows();
-calcTotals();
+// calcTotals(); Ryan call only once (is salso called in renderFooter function).  I recommend calling in the render footer method.  this way you can clear out your totals as well.  and it happens every time you render a new footer
 renderFooter();
 
 //addEventListener
